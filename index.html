@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Raidighi CCC</title>
+    
+    <!-- PWA Settings & Apple Tags -->
+    <meta name="theme-color" content="#00b894">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Raidighi CCC">
+
+    <!-- Web App Manifest (Inline Blob for single-host setup on GitHub) -->
+    <script>
+      const manifestData = {
+        name: "Raidighi CCC",
+        short_name: "Raidighi CCC",
+        description: "Raidighi CCC Field Application",
+        start_url: window.location.href,
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#00b894",
+        orientation: "portrait",
+        icons: [
+          {
+            src: "https://cdn.aptoide.com/imgs/4/d/8/4d8c88cd950685bd2cf5aa33484f16a8_icon.png",
+            sizes: "192x192",
+            type: "image/png"
+          },
+          {
+            src: "https://cdn.aptoide.com/imgs/4/d/8/4d8c88cd950685bd2cf5aa33484f16a8_icon.png",
+            sizes: "512x512",
+            type: "image/png"
+          }
+        ]
+      };
+
+      const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: "application/json" });
+      const manifestLink = document.createElement("link");
+      manifestLink.rel = "manifest";
+      manifestLink.href = URL.createObjectURL(manifestBlob);
+      document.head.appendChild(manifestLink);
+    </script>
+    
+    <link rel="apple-touch-icon" href="https://cdn.aptoide.com/imgs/4/d/8/4d8c88cd950685bd2cf5aa33484f16a8_icon.png">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+            background-color: #ffffff;
+        }
+
+        /* Premium Setup Launcher Splash Screen */
+        #splash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease, visibility 0.4s;
+        }
+
+        #splash-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .splash-logo {
+            width: 105px;
+            height: 65px;
+            border-radius: 1%;
+            background: #4b4bad;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(0, 184, 148, 0.2);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .splash-title {
+            font-size: 30px;
+            font-weight: 600;
+            color: #82f5a6;
+            margin-bottom: 6px;
+        }
+
+        .splash-subtitle {
+            font-size: 23px;
+            color: #636e72;
+            margin-bottom: 26px;
+        }
+
+        .loading-spinner {
+            width: 90px;
+            height: 65px;
+            border: 3px solid #e1e8eb;
+            border-top: 3px solid #004d3e;
+            border-radius: 10%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Intelligent Floating Premium Install Banner */
+        #pwa-install-banner {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 420px;
+            background-color: #ffffff;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(0, 184, 148, 0.15);
+            border-radius: 18px;
+            padding: 16px;
+            z-index: 99999;
+            box-sizing: border-box;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .banner-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .banner-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background-color: #00b894;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 184, 148, 0.2);
+            flex-shrink: 0;
+        }
+
+        .banner-text h4 {
+            margin: 0 0 3px 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #2d3436;
+        }
+
+        .banner-text p {
+            margin: 0;
+            font-size: 12px;
+            color: #636e72;
+            line-height: 1.4;
+        }
+
+        .banner-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary {
+            background-color: #f1f2f6;
+            color: #57606f;
+        }
+
+        .btn-secondary:hover {
+            background-color: #dfe4ea;
+        }
+
+        .btn-primary {
+            background-color: #00b894;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #00a484;
+            transform: translateY(-1px);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.95; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Google Apps Script Embedded Iframe with permissions -->
+    <iframe 
+      id="gas-portal" 
+      src="https://script.google.com/macros/s/AKfycbwCy-JMyk7nCX-NzBPGH1KeZz70DdLnzDXJCl33z8wQk9nTZGCqRkSrGPZ4w4w9APCi7g/exec" 
+      allow="camera; microphone; geolocation"
+      title="RDG Portal">
+    </iframe>
+
+    <!-- Loading Splash Screen -->
+    <div id="splash-screen">
+      <div class="splash-logo">RDG Portal</div>
+      <div class="splash-title">Raidighi CCC</div>
+      <div class="splash-subtitle">Connecting To Server...</div>
+      <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Smart Intelligent Install Banner -->
+    <div id="pwa-install-banner">
+      <div class="banner-content">
+        <div class="banner-icon">📲</div>
+        <div class="banner-text">
+          <h4>Reading Portal</h4>
+          <p>Install this app on your screen to instant launch and get the best experience of full-screen apps</p>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="btn btn-secondary" onclick="dismissInstall()">Install Later</button>
+        <button class="btn btn-primary" onclick="triggerInstall()">Install Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ১. Service Worker Register করার কোড
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // dynamic inline inline SW load to cache assets
+        const swBlob = new Blob([`
+          const CACHE_NAME = 'ccc-cache-v3';
+          
+          self.addEventListener('install', (e) => {
+            self.skipWaiting();
+          });
+
+          self.addEventListener('activate', (e) => {
+            e.waitUntil(clients.claim());
+          });
+
+          self.addEventListener('fetch', (e) => {
+            if (e.request.method !== 'GET') return;
+            e.respondWith(
+              fetch(e.request)
+                .then(response => {
+                  const clone = response.clone();
+                  caches.open(CACHE_NAME).then(cache => {
+                    cache.put(e.request, clone);
+                  });
+                  return response;
+                })
+                .catch(() => caches.match(e.request))
+            );
+          });
+        `], { type: 'application/javascript' });
+        
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+          .then(reg => console.log('PWA Service Worker registration successful!'))
+          .catch(err => console.warn('SW Register Failed: ', err));
+      });
+    }
+
+    // ২. স্প্ল্যাশ স্ক্রিন রিমুভার (পোর্টাল লোড হলে এটি সরে যাবে)
+    const gasPortal = document.getElementById('gas-portal');
+    const splashScreen = document.getElementById('splash-screen');
+    
+    // Safety check: ৫ সেকেন্ডের মধ্যে ব্যাকএন্ড সাড়া না দিলেও স্প্ল্যাশ স্ক্রিন সরবে
+    const safetyTimer = setTimeout(() => {
+      clearSplashScreen();
+    }, 5000);
+
+    function clearSplashScreen() {
+      if (splashScreen && !splashScreen.classList.contains('fade-out')) {
+        splashScreen.classList.add('fade-out');
+        clearTimeout(safetyTimer);
+      }
+    }
+
+    gasPortal.addEventListener('load', clearSplashScreen);
+
+    // ৩. বুদ্ধিমান ও রেসপন্সিভ ইনস্টল ব্যানার সিস্টেম
+    // এটি মোবাইল বা পিসিতে অলরেডি ইনস্টল করা থাকলে "standalone" ডিটেক্ট করে একদম হাইড হয়ে থাকবে।
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true || 
+                         document.referrer.includes('android-app://') ||
+                         localStorage.getItem('pwa_installed') === 'true';
+
+    let deferredPrompt = null;
+    const installBanner = document.getElementById('pwa-install-banner');
+
+    // ইনস্টল করা না থাকলে পেজ ঢোকার ২ সেকেন্ড পরে ব্যানার দেখাও
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!isStandalone) {
+        setTimeout(() => {
+          showInstallBanner();
+        }, 2000);
+      }
+    });
+
+    // ব্রাউজার যদি রেডি ইনস্ট্যান্স পায়, ব্যানার রেন্ডার করো
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!isStandalone) {
+        showInstallBanner();
+      }
+    });
+
+    function showInstallBanner() {
+      if (installBanner && !sessionStorage.getItem('pwa_banner_dismissed') && !isStandalone) {
+        installBanner.style.display = 'block';
+      }
+    }
+
+    function dismissInstall() {
+      if (installBanner) {
+        installBanner.style.display = 'none';
+        sessionStorage.setItem('pwa_banner_dismissed', 'true');
+      }
+    }
+
+    function triggerInstall() {
+      // Chrome, Edge, Android ব্রাউজারে ওয়ান-ক্লিক সরাসরি ইনস্টল
+      if (deferredPrompt) {
+        dismissInstall();
+        deferredPrompt.prompt();
+        
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            localStorage.setItem('pwa_installed', 'true');
+            console.log('User accepted the PWA installation');
+          }
+          deferredPrompt = null;
+        });
+        return;
+      }
+      
+      // iOS / Safari অথবা অন্যান্য নিয়ম বহির্ভূত ব্রাউজারের সহজ গাইডলাইন
+      const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isiOS) {
+        alert("📲 iOS/iPhone এ ইনস্টল করার নিয়ম:\n\n১. আপনার Safari ব্রাউজারের নিচের 'Share' (শেয়ার) বোতামে ক্লিক করুন।\n২. নিচে স্ক্রোল করে 'Add to Home Screen' (হোম স্ক্রিনে যোগ করুন) সিলেক্ট করুন।\n৩. উপরে ডানে 'Add' অপশনে চাপ দিন। অ্যাপটি আপনার ফোনে ইনস্টল হয়ে যাবে!");
+      } else {
+        alert("📲 ইনস্টল করার নিয়ম:\n\n১. ব্রাউজারের উপরে ডানদিকের ৩টি ডট (মেনু) আইকনে ক্লিক করুন।\n২. 'Install app' বা 'Add to Home screen' (হোম স্ক্রিনে যোগ করুন) অপশনে চাপ দিন।");
+      }
+    }
+
+    window.addEventListener('appinstalled', (evt) => {
+      console.log('PWA is installed successfully!');
+      localStorage.setItem('pwa_installed', 'true');
+      dismissInstall();
+    });
+  </script>
+</body>
+</html>
