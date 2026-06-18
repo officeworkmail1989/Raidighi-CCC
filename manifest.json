@@ -1,11 +1,11 @@
 {
   "name": "Raidighi CCC",
-  "short_name": "RDG Portal",
-  "description": "Raidighi CCC PWA Launcher",
+  "short_name": "Raidighi CCC",
+  "description": "Raidighi CCC Field Application Portal",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#00b894",
+  "background_color": "#ff6b6b",
+  "theme_color": "#ff6b6b",
   "orientation": "portrait",
   "icons": [
     {
