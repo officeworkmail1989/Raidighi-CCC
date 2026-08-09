@@ -292,8 +292,8 @@
         <!-- Share Button -->
         <div class="top-btn" onclick="doShare()" title="শেয়ার করুন" style="font-size: 15px;">🔗</div>
 
-        <!-- Dark Mode Toggle -->
-        <div class="top-btn" id="theme-btn" onclick="toggleTheme()" title="Dark / Light Mode">🌙</div>
+        <!-- Hard Reset Button -->
+        <div class="top-btn" id="reset-btn" onclick="hardReset()" title="অ্যাপ হার্ড রিসেট করুন">♻️</div>
     </div>
 
     <!-- iFrame -->
@@ -378,18 +378,42 @@ function hideSplash() {
 document.getElementById('gas-portal').addEventListener('load', hideSplash);
 setTimeout(hideSplash, 6000);
 
-/* ── DARK MODE ── */
-const html     = document.documentElement;
-const themeBtn = document.getElementById('theme-btn');
-let isDark = localStorage.getItem('theme') === 'dark';
+/* ── HARD RESET (clears settings/cache + forces latest update) ── */
+const resetBtn = document.getElementById('reset-btn');
 
-function applyTheme() {
-    html.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    themeBtn.textContent = isDark ? '☀️' : '🌙';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+async function hardReset() {
+    const ok = confirm('⚠️ এটি অ্যাপের সমস্ত সেটিংস ও ক্যাশে মুছে দেবে এবং সর্বশেষ আপডেট লোড করবে।\n\nআপনি কি নিশ্চিত?');
+    if (!ok) return;
+
+    resetBtn.style.pointerEvents = 'none';
+    resetBtn.textContent = '⏳';
+    showToast('♻️ রিসেট হচ্ছে…');
+
+    try {
+        // 1) Clear all local settings/data
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // 2) Unregister the service worker so a fresh one takes over
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(reg => reg.unregister()));
+        }
+
+        // 3) Delete every cache (forces re-download of latest files on reload)
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+        }
+    } catch (err) {
+        console.warn('[Reset] error:', err);
+    }
+
+    // 4) Reload bypassing cache with a busting param so the newest update loads
+    setTimeout(() => {
+        window.location.href = window.location.pathname + '?reset=' + Date.now();
+    }, 400);
 }
-function toggleTheme() { isDark = !isDark; applyTheme(); }
-applyTheme();
 
 /* ── WHATSAPP REDIRECT FUNCTION ── */
 function openWhatsApp() {
