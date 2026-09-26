@@ -11,19 +11,21 @@
     <meta name="apple-mobile-web-app-title" content="Raidighi CCC">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn.aptoide.com/imgs/4/d/8/4d8c88cd950685bd2cf5aa33484f16a8_icon.png">
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* ── THEME VARIABLES ── */
         :root {
             --bg: #f7f9ff;
             --top-bar-from: #ff6b6b;
             --top-bar-to: #4d96ff;
+            --text-on-bar: #fff;
             --net-online: #00b894;
             --net-offline: #e17055;
             --offline-bg: #1a1a2e;
+            --offline-card: #16213e;
+            --fab-bg: rgba(255,255,255,0.18);
         }
         [data-theme="dark"] {
             --bg: #0f0f1a;
@@ -41,6 +43,7 @@
 
         #app { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; }
 
+        /* ── TOP BAR ── */
         #top-bar {
             position: fixed; top: 0; left: 0; right: 0;
             height: 56px;
@@ -60,21 +63,52 @@
             border: 1.5px solid rgba(255,255,255,0.4);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; font-size: 17px;
-            transition: background 0.2s, transform 0.15s;
+            transition: background 0.2s, transform 0.15s, border-color 0.2s;
+            flex-shrink: 0;
             color: #fff;
         }
         .top-btn:hover  { background: rgba(255,255,255,0.35); transform: translateY(-1px); }
+        .top-btn:active { transform: scale(0.9); }
 
-        #live-badge { display: flex; align-items: center; gap: 4px; }
-        #live-dot { width: 8px; height: 8px; border-radius: 50%; background: #00ff88; }
-        #live-label { font-size: 10px; font-weight: 700; color: #fff; }
+        /* ── WHATSAPP BUTTON SPECIFIC STYLING ── */
+        .top-btn.whatsapp-brand-btn {
+            background: #25D366;
+            border-color: #128C7E;
+            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.4);
+        }
+        .top-btn.whatsapp-brand-btn:hover {
+            background: #20ba5a;
+            border-color: #0e6f63;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.55);
+        }
 
+        #live-badge {
+            display: flex; align-items: center; gap: 4px;
+            transition: background 0.4s;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+        }
+        #live-badge.offline-mode { background: transparent; }
+        #live-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #00ff88;
+            transition: background 0.4s;
+        }
+        #live-badge.offline-mode #live-dot {
+            background: #ff6b6b;
+            animation: none;
+        }
+        #live-label { font-size: 10px; font-weight: 700; color: #fff; letter-spacing: 0.8px; }
+
+        /* ── IFRAME ── */
         #gas-portal {
             border: none; width: 100%; flex: 1;
             margin-top: 56px;
             background: #fff;
+            transition: filter 0.3s;
         }
+        [data-theme="dark"] #gas-portal { filter: invert(0.92) hue-rotate(180deg); }
 
+        /* ── SPLASH SCREEN ── */
         #splash {
             position: fixed; inset: 0;
             background: linear-gradient(145deg, #ff6b6b 0%, #ffd93d 38%, #6bcb77 68%, #4d96ff 100%);
@@ -83,27 +117,68 @@
             z-index: 9999;
             transition: opacity 0.55s ease, transform 0.55s ease;
         }
-        #splash.fade-out { opacity: 0; pointer-events: none; }
+        #splash.fade-out { opacity: 0; transform: scale(1.04); pointer-events: none; }
         .s-logo-ring {
             width: 96px; height: 96px; border-radius: 26px;
             background: rgba(255,255,255,0.22);
             border: 2.5px solid rgba(255,255,255,0.55);
             display: flex; align-items: center; justify-content: center;
             margin-bottom: 22px;
+            animation: logoPop 2.2s ease-in-out infinite;
         }
-        .s-logo-text { font-size: 32px; font-weight: 800; color: #fff; }
-        .s-name { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-        .s-sub  { font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 30px; }
+        .s-logo-text { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+        .s-name { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 6px; animation: fadeUp 0.6s 0.15s both; }
+        .s-sub  { font-size: 14px; color: rgba(255,255,255,0.88); margin-bottom: 34px; animation: fadeUp 0.6s 0.3s both; }
         .s-progress-track { width: 200px; height: 6px; background: rgba(255,255,255,0.28); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
         .s-progress-bar   { height: 100%; width: 0%; background: #fff; border-radius: 10px; transition: width 0.12s linear; }
+        .s-pct { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600; }
 
+        /* ── OFFLINE FALLBACK PAGE ── */
         #offline-page {
-            display: none; position: fixed; inset: 0;
+            display: none;
+            position: fixed; inset: 0;
             background: var(--offline-bg);
-            flex-direction: column; align-items: center; justify-content: center;
-            z-index: 7000; color: #fff;
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 7000;
+            animation: fadeUp 0.4s ease;
         }
         #offline-page.show { display: flex; }
+        .offline-icon { font-size: 64px; margin-bottom: 16px; animation: pulse 2s ease-in-out infinite; }
+        .offline-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+        .offline-sub   { font-size: 14px; color: rgba(255,255,255,0.6); text-align: center; margin-bottom: 32px; line-height: 1.6; }
+        .offline-retry {
+            padding: 13px 32px; border-radius: 50px;
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d);
+            color: #fff; font-size: 14px; font-weight: 700;
+            border: none; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .offline-dots { display: flex; gap: 8px; margin-top: 40px; }
+        .offline-dots span {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            animation: blink 1.4s ease-in-out infinite;
+        }
+        .offline-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .offline-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* ── NOTIFICATION TOAST ── */
+        #notif-toast {
+            position: fixed; top: 84px; left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: #1a1a2e; color: #fff;
+            padding: 10px 18px; border-radius: 12px;
+            font-size: 13px; font-weight: 600;
+            z-index: 9998; opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #notif-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         /* ── PWA INSTALL BANNER ── */
         #install-banner {
@@ -130,19 +205,7 @@
         .ib-later { background: #f1f3f5; color: #555; }
         .ib-now   { background: linear-gradient(135deg,#ff6b6b,#ffd93d); color: #fff; }
 
-
-        /* ── HEADER ICON ENHANCEMENTS (from index 1) ── */
-        .top-btn:active { transform: scale(0.9); }
-        .top-btn.whatsapp-brand-btn {
-            background: #25D366;
-            border-color: #128C7E;
-            box-shadow: 0 2px 8px rgba(37, 211, 102, 0.4);
-        }
-        .top-btn.whatsapp-brand-btn:hover {
-            background: #20ba5a;
-            border-color: #0e6f63;
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.55);
-        }
+        /* ── ANIMATED INDIAN FLAG (GIF version, replaces old ℹ️ info button) ── */
         #flag-icon {
             position: relative;
             overflow: hidden;
@@ -155,24 +218,15 @@
             object-fit: cover;
             display: block;
         }
+
         #live-dot.online-pulse { animation: blink 1.2s ease-in-out infinite; }
 
-        /* ── NOTIFICATION TOAST ── */
-        #notif-toast {
-            position: fixed; top: 84px; left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background: #1a1a2e; color: #fff;
-            padding: 10px 18px; border-radius: 12px;
-            font-size: 13px; font-weight: 600;
-            z-index: 9998; opacity: 0;
-            transition: opacity 0.3s, transform 0.3s;
-            white-space: nowrap;
-            pointer-events: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        #notif-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.25;transform:scale(0.8)} }
+        /* ── KEYFRAMES ── */
+        @keyframes blink   { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.25;transform:scale(0.8)} }
+        @keyframes logoPop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+        @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideUp { from{transform:translate(-50%,80px);opacity:0} to{transform:translate(-50%,0);opacity:1} }
+        @keyframes pulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
     </style>
 </head>
 <body>
@@ -209,22 +263,36 @@
         <div class="top-btn" id="reset-btn" onclick="hardReset()" title="অ্যাপ হার্ড রিসেট করুন">♻️</div>
     </div>
 
+    <!-- iFrame -->
+    <iframe
+        id="gas-portal"
+        src="https://script.google.com/macros/s/AKfycbyBQcT5q9GY6TTZ18QC7rl1n13Ul5o7cKgDQ-cXbgNqrhbhOem3zF2dpUJl89Yj3dGi/exec"
+        allow="camera; microphone; geolocation"
+        title="Raidighi CCC Portal">
+    </iframe>
 
-    <!-- Main iFrame -->
-    <iframe id="gas-portal" allow="camera; microphone; geolocation" title="Raidighi CCC Portal"></iframe>
-
-    <!-- Welcome / Google Sign-in Screen -->
-    <div id="welcome-screen" style="display:none; position:fixed; inset:0; z-index:9997; background:#08090d; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center;">
-        <div style="font-size:56px; margin-bottom:14px;">👋</div>
-        <div style="color:#f4f4f5; font-size:20px; font-weight:700; margin-bottom:10px;">স্বাগতম!</div>
-        <div style="color:rgba(244,244,245,0.6); font-size:13.5px; line-height:1.7; max-width:340px; margin-bottom:24px;">
-            Raidighi CCC পোর্টাল ব্যবহারের জন্য আপনার Google Account দিয়ে Sign in করুন।
+    <!-- Splash Screen -->
+    <div id="splash">
+        <div class="s-logo-ring"><span class="s-logo-text">RDG</span></div>
+        <div class="s-name">Raidighi CCC</div>
+        <div class="s-sub">Connecting To Server…</div>
+        <div class="s-progress-track">
+            <div class="s-progress-bar" id="prog-bar"></div>
         </div>
-        <div id="gsi-button-container"></div>
+        <div class="s-pct" id="prog-pct">0%</div>
+    </div>
+
+    <!-- Offline Fallback Page -->
+    <div id="offline-page">
+        <div class="offline-icon">📡</div>
+        <div class="offline-title">ইন্টারনেট নেই!</div>
+        <div class="offline-sub">আপনার নেটওয়ার্ক সংযোগ পাওয়া যাচ্ছে না।<br>WiFi বা Mobile Data চালু করে চেষ্টা করুন।</div>
+        <button class="offline-retry" onclick="retryConnection()">🔄 আবার চেষ্টা করুন</button>
+        <div class="offline-dots"><span></span><span></span><span></span></div>
     </div>
 
     <!-- Notification Toast -->
-    <div id="notif-toast" role="status" aria-live="polite"></div>
+    <div id="notif-toast">🔔 Notification চালু হয়েছে!</div>
 
     <!-- Install Banner -->
     <div id="install-banner">
@@ -241,138 +309,43 @@
         </div>
     </div>
 
-    <!-- Splash Screen -->
-    <div id="splash">
-        <div class="s-logo-ring"><span class="s-logo-text">RDG</span></div>
-        <div class="s-name">Raidighi CCC</div>
-        <div class="s-sub">Connecting...</div>
-        <div class="s-progress-track">
-            <div class="s-progress-bar" id="prog-bar"></div>
-        </div>
-        <div class="s-pct" id="prog-pct" style="color:#fff; font-size:12px;">0%</div>
-    </div>
-
-    <!-- Offline Fallback -->
-    <div id="offline-page">
-        <div style="font-size:56px; margin-bottom:16px;">📡</div>
-        <h2 style="margin-bottom:8px;">ইন্টারনেট নেই!</h2>
-        <p style="color:#aaa; margin-bottom:24px;">আপনার ইন্টারনেট সংযোগ পরীক্ষা করে পুনরায় চেষ্টা করুন।</p>
-        <button style="padding:12px 28px; border-radius:50px; border:none; background:#ff6b6b; color:#fff; font-weight:bold; cursor:pointer;" onclick="location.reload()">🔄 আবার চেষ্টা করুন</button>
-    </div>
-
 </div>
-
 <script>
-const GOOGLE_CLIENT_ID = "93037108472-dtqhchi63i06k7d8gst8mr1puep3c61t.apps.googleusercontent.com";
-// আপনার Raidighi CCC এর ডিপ্লয় করা Google Apps Script Exec URL দিন:
-const IFRAME_SRC = "https://script.google.com/macros/s/AKfycby3OefusgFOKOwW5r_aaYdfWedqWAZDcowkQmGpZcgGYIbioLwCsLa-qjlllvKTKiw/exec";
-
-function decodeJWT(token) {
-    try {
-        const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-        const json = decodeURIComponent(atob(base64).split('').map(
-            c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-        ).join(''));
-        return JSON.parse(json);
-    } catch (e) { return null; }
-}
-
-function loadAppWithToken(token) {
-    document.getElementById('welcome-screen').style.display = 'none';
-    document.getElementById('splash').style.display = 'flex';
-    document.getElementById('splash').classList.remove('fade-out');
-    document.getElementById('gas-portal').src = IFRAME_SRC + '?token=' + encodeURIComponent(token);
-    initSplashProgress();
-}
-
-function handleCredentialResponse(response) {
-    const payload = decodeJWT(response.credential);
-    try {
-        localStorage.setItem('gsiToken', response.credential);
-        if (payload) {
-            if (payload.exp)   localStorage.setItem('gsiTokenExp', payload.exp);
-            if (payload.email) localStorage.setItem('gsiEmail', payload.email);
-        }
-    } catch (e) {}
-    loadAppWithToken(response.credential);
-}
-
-function showSignInScreen() {
-    document.getElementById('splash').style.display = 'none';
-    document.getElementById('welcome-screen').style.display = 'flex';
-}
-
-function checkRegistration() {
-    try {
-        const savedToken = localStorage.getItem('gsiToken');
-        const savedExp   = parseInt(localStorage.getItem('gsiTokenExp') || '0', 10);
-        if (savedToken && savedExp && (savedExp - 300) > (Date.now() / 1000)) {
-            loadAppWithToken(savedToken);
-            return;
-        }
-    } catch (e) {}
-
-    if (typeof google === 'undefined' || !google.accounts) {
-        setTimeout(checkRegistration, 300);
-        return;
-    }
-
-    let savedEmail = null;
-    try { savedEmail = localStorage.getItem('gsiEmail'); } catch (e) {}
-
-    const config = {
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-        auto_select: true,
-        itp_support: true
-    };
-    if (savedEmail) config.login_hint = savedEmail;
-
-    google.accounts.id.initialize(config);
-    google.accounts.id.renderButton(
-        document.getElementById('gsi-button-container'),
-        { theme: 'filled_blue', size: 'large', width: 280, text: 'signin_with' }
-    );
-
-    google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            showSignInScreen();
-        }
+/* ── SERVICE WORKER ── */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => {
+                console.log('[PWA] SW registered');
+                window._swReg = reg;
+            })
+            .catch(e => console.warn('[PWA] SW failed:', e));
     });
-
-    setTimeout(() => {
-        const portal = document.getElementById('gas-portal');
-        if (!portal.src) showSignInScreen();
-    }, 4000);
 }
 
-/* ── PROGRESS BAR ── */
-let pct = 0, tick = null;
-function initSplashProgress() {
-    pct = 0;
-    clearInterval(tick);
-    tick = setInterval(() => {
-        pct += Math.random() * 15 + 5;
-        if (pct >= 100) { pct = 100; clearInterval(tick); }
-        document.getElementById('prog-bar').style.width = pct + '%';
-        document.getElementById('prog-pct').textContent = Math.round(pct) + '%';
-    }, 180);
-    setTimeout(hideSplash, 6000);
-}
+/* ── SPLASH PROGRESS BAR ── */
+const progBar = document.getElementById('prog-bar');
+const progPct = document.getElementById('prog-pct');
+const splash  = document.getElementById('splash');
+let pct = 0;
+const tick = setInterval(() => {
+    pct += Math.random() * 14 + 4;
+    if (pct >= 100) { pct = 100; clearInterval(tick); }
+    progBar.style.width = pct + '%';
+    progPct.textContent = Math.round(pct) + '%';
+}, 180);
 
 function hideSplash() {
-    const s = document.getElementById('splash');
-    if (!s.classList.contains('fade-out')) {
+    if (!splash.classList.contains('fade-out')) {
+        pct = 100; progBar.style.width = '100%'; progPct.textContent = '100%';
         clearInterval(tick);
-        document.getElementById('prog-bar').style.width = '100%';
-        setTimeout(() => s.classList.add('fade-out'), 300);
+        setTimeout(() => splash.classList.add('fade-out'), 300);
     }
 }
 document.getElementById('gas-portal').addEventListener('load', hideSplash);
+setTimeout(hideSplash, 6000);
 
-checkRegistration();
-
-/* ── HEADER ACTIONS: WHATSAPP, SHARE & HARD RESET ── */
+/* ── HARD RESET (clears settings/cache + forces latest update) ── */
 const resetBtn = document.getElementById('reset-btn');
 
 async function hardReset() {
@@ -388,13 +361,13 @@ async function hardReset() {
         localStorage.clear();
         sessionStorage.clear();
 
-        // 2) Unregister service workers (if present)
+        // 2) Unregister the service worker so a fresh one takes over
         if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             await Promise.all(regs.map(reg => reg.unregister()));
         }
 
-        // 3) Delete all Cache Storage entries (if present)
+        // 3) Delete every cache (forces re-download of latest files on reload)
         if ('caches' in window) {
             const keys = await caches.keys();
             await Promise.all(keys.map(k => caches.delete(k)));
@@ -403,12 +376,13 @@ async function hardReset() {
         console.warn('[Reset] error:', err);
     }
 
-    // 4) Force a fresh page load
+    // 4) Reload bypassing cache with a busting param so the newest update loads
     setTimeout(() => {
         window.location.href = window.location.pathname + '?reset=' + Date.now();
     }, 400);
 }
 
+/* ── WHATSAPP REDIRECT FUNCTION ── */
 function openWhatsApp() {
     const phoneNumber = "919153637208";
     const customText = encodeURIComponent("হ্যালো এডমিন, আমি Raidighi CCC পোর্টাল থেকে যোগাযোগ করছি।");
@@ -416,7 +390,7 @@ function openWhatsApp() {
     window.open(waUrl, "_blank");
     showToast("💬 হোয়াটসঅ্যাপ খোলা হচ্ছে...");
 }
-
+/* ── NATIVE SHARE ── */
 function doShare() {
     const shareData = {
         title: 'Raidighi CCC',
@@ -425,28 +399,54 @@ function doShare() {
     };
     if (navigator.share) {
         navigator.share(shareData).catch(() => {});
-    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    } else {
         navigator.clipboard.writeText(window.location.href).then(() => {
             showToast('🔗 Link copied to clipboard!');
         }).catch(() => {
             showToast('📋 Link: ' + window.location.href);
         });
-    } else {
-        showToast('📋 Link: ' + window.location.href);
     }
 }
 
 function showToast(msg) {
     const t = document.getElementById('notif-toast');
-    if (!t) return;
     t.textContent = msg;
     t.classList.add('show');
-    clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+    setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-window.addEventListener('online', () => document.getElementById('offline-page').classList.remove('show'));
-window.addEventListener('offline', () => document.getElementById('offline-page').classList.add('show'));
+/* ── NETWORK STATUS → LIVE BADGE ── */
+const liveBadge = document.getElementById('live-badge');
+const liveDot   = document.getElementById('live-dot');
+const liveLabel = document.getElementById('live-label');
+const offPage   = document.getElementById('offline-page');
+
+function updateNet() {
+    if (navigator.onLine) {
+        liveBadge.classList.remove('offline-mode');
+        liveDot.classList.add('online-pulse');
+        liveDot.style.background = '#00ff88';
+        liveLabel.textContent = 'LIVE';
+        offPage.classList.remove('show');
+    } else {
+        liveBadge.classList.add('offline-mode');
+        liveDot.classList.remove('online-pulse');
+        liveDot.style.background = '#ff6b6b';
+        liveLabel.textContent = 'OFFLINE';
+        offPage.classList.add('show');
+    }
+}
+function retryConnection() {
+    if (navigator.onLine) { offPage.classList.remove('show'); document.getElementById('gas-portal').src += ''; }
+    else {
+        const btn = offPage.querySelector('.offline-retry');
+        btn.textContent = '⏳ চেক করছি…';
+        setTimeout(() => { btn.textContent = '🔄 আবার চেষ্টা করুন'; updateNet(); }, 2000);
+    }
+}
+window.addEventListener('online',  updateNet);
+window.addEventListener('offline', updateNet);
+updateNet();
 
 /* ── PWA INSTALL BANNER ── */
 const isStandalone =
