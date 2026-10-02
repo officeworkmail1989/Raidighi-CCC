@@ -1,4 +1,4 @@
-const CACHE_NAME = 'raidighi-ccc-v6';
+const CACHE_NAME = 'raidighi-ccc-v8';
 const ASSETS = ['index.html', 'manifest.json', 'offline.html'];
 
 const OFFLINE_HTML = `<!DOCTYPE html>
